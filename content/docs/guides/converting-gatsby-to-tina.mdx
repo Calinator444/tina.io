@@ -15,9 +15,9 @@ In this tutorial we'll be showing you how you might go about converting an exist
 
 There are a few limitations with the approach outlined in this guide.
 
-* You don't get visual editing
-* You lose out in Gatsby's image optimization
-* Gatsby uses Github Flavoured Markdown, which TinaCMS doesn't fully support
+- You don't get visual editing
+- You lose out in Gatsby's image optimization
+- Gatsby uses Github Flavoured Markdown, which TinaCMS doesn't fully support
 
 ## Getting started
 
@@ -174,8 +174,8 @@ exports.onCreateNode = ({ node, actions, getNode }) => {
 
 There's still a few parameters we need to provide to `parseMDX` before it can do it's job.
 
-* The second argument is a copy of the field we defined in our config.js file.
-* The third is a callback function that the parser uses when coming across any image links. We'll use that callback function to update our image urls to point to the image directory we defined in our config file.
+- The second argument is a copy of the field we defined in our config.js file.
+- The third is a callback function that the parser uses when coming across any image links. We'll use that callback function to update our image urls to point to the image directory we defined in our config file.
 
 ```diff
 + const imageCallback = url => {
@@ -206,7 +206,7 @@ exports.onCreateNode = ({ node, actions, getNode }) => {
 
 Now that we've defined our new custom node we should be ready to use it in our graphql query. Open `src/templates/blog-post.js` and add our custom node to the page query.
 
-```
+```diff
 export const pageQuery = graphql`
   query BlogPostBySlug(
     $id: String!
@@ -418,16 +418,16 @@ createNodeField({
 
 Next, we'll define how the custom component will look in `blog-post.js`. We'll be parsing the child of the component into our TinaMarkdown renderer to give us rich text editing capabilities.
 
-```javascript
-- const components = {
-- RichBlockQuote: props => {
--     return (
--        <blockquote>
--          <TinaMarkdown content={props.children} />
--        </blockquote>
--      )
-- },
-- }
+```diff
++ const components = {
++ RichBlockQuote: props => {
++ return (
++     <blockquote>
++       <TinaMarkdown content={props.children} />
++     </blockquote>
++     )
++   },
++ }
 ```
 
 Setting the body to the built-in `children` property in React allows us to use the children of our React component as a value. This has the added benefit of making our markdown easy to read. For example, check out the example below.
