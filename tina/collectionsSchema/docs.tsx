@@ -21,6 +21,13 @@ export const docsCollection = {
   },
   fields: [
     {
+      name: 'lastChecked',
+      type: 'datetime',
+      ui: {
+        component: 'hidden',
+      },
+    },
+    {
       name: 'cmsUsageWarning',
       label: 'CMS Usage Warning',
       type: 'string',
