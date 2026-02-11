@@ -35,6 +35,13 @@ export const blogsCollection = {
       },
     },
     {
+      type: 'datetime',
+      name: 'lastChecked',
+      ui: {
+        component: 'hidden'
+      },
+    },
+    {
       // note: this should be a hidden field that auto-updates
       type: 'string',
       name: 'last_edited',

@@ -1,0 +1,27 @@
+{
+  "name": "parse-tina-response",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "module": "nodenext",
+  "scripts": {
+    "aggregate-links": "tsx ./src/aggregate-links.ts",
+    "map-links-to-content": "tsx ./src/map-links-to-content.ts",
+    "migrate-content": "tsx ./src/migrate-content.ts",
+    "update-checked": "tsx ./src/update-checked.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.0",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.19",
+    "dotenv": "^17.2.3"
+  }
+}
