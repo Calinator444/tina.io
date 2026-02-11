@@ -52,7 +52,7 @@ jobs:
         id: call-model
         uses: actions/ai-inference@v2
         with:
-          max-tokens: 9000
+          max-tokens: null
           model: mistral-ai/Ministral-3B
           prompt-file: .github/prompts/auditor.prompt.yml
           input: |
