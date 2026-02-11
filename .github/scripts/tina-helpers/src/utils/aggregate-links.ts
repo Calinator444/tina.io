@@ -33,7 +33,7 @@ const aggregateContent = async (desiredLength : number)=> {
     const allLinks: Array<string> = [];
 
     const content = await tinaClient.getContent({first: desiredLength, before: expiryDate.toISOString()});
-
+    console.log("Content retrieved from TinaCMS:", content);
     for(const key of Object.keys(content.data)) {
         const data = content.data[key]!;
         const edges = data.edges;
