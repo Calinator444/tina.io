@@ -1,0 +1,138 @@
+name: Audit Content with AI
+on:
+  workflow_dispatch:
+permissions:
+  models: read
+  contents: write
+  issues: write
+  pull-requests: write
+jobs: 
+  query-tina-content: 
+    outputs:
+      paths: ${{ steps.run.outputs.paths }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      # TODO: Add handling if tina path returns nothing
+      # TODO: Add error handling for if files cannot be linked to paths
+      - name: "Aggregate Content Paths from TinaCMS"
+        id: run
+        run: |
+          cd .github/scripts/tina-helpers
+          touch .env
+          echo TINA_CONTENT_BRANCH='${{ github.ref_name }}' >> .env
+          echo TINA_CLIENT_ID=${{ secrets.TINA_CLIENT_ID }} >> .env
+          echo TINA_TOKEN=${{ secrets.TINA_TOKEN }} >> .env
+          echo TINA_AUDITOR_COLLECTION='${{ vars.TINA_AUDITOR_COLLECTION }}' >> .env
+          echo TINA_AUDITOR_EXPIRY_DAYS='${{ vars.TINA_AUDITOR_EXPIRY_DAYS }}' >> .env
+          echo TINA_AUDITOR_CONTENT_WINDOW='${{ vars.TINA_AUDITOR_CONTENT_WINDOW }}' >> .env
+          pnpm install
+          PATHS=$(pnpm --silent run aggregate-links)
+
+          echo "paths<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$PATHS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+  generate-feedback:
+    runs-on: ubuntu-latest
+    needs: query-tina-content
+    strategy:
+      max-parallel: 2
+      matrix:
+        path: ${{ fromJson(needs.query-tina-content.outputs.paths) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # TODO: Add error handling block if rate limit exceeded
+      - name: Call Model
+        id: call-model
+        uses: actions/ai-inference@v2
+        with:
+          max-tokens: 1000
+          model: mistral-ai/Ministral-3B
+          prompt-file: .github/prompts/auditor.prompt.yml
+          input: |
+            systemprompt: ${{ vars.TINA_AUDITOR_SYSTEM_PROMPT || 'You are an expert content auditor. Your task is to review the provided markdown content and provide constructive feedback on its quality, clarity, relevance and engagement. You should highlight and suggest specific areas for improvement. Ignore the lastChecked date.' }}
+          file_input: |
+            content: ${{ matrix.path }}            
+      - name: "Log Issues"
+        uses: actions/github-script@v8
+        env:
+          FILE_PATH: ${{ matrix.path }}
+          FEEDBACK: ${{ steps.call-model.outputs.response }}
+        # TODO: Add error handling for invalid JSON
+        with: 
+          script: |
+            const { outdated, suggestions, overview} = JSON.parse(process.env.FEEDBACK);
+            const { owner, repo } = context.repo;
+            const title = `🦙 Content audit | ${process.env.FILE_PATH}`;
+            const body = [
+              `### Overview`,
+              overview,
+              `### Suggestions`,
+              suggestions,
+              `### File Location`,
+              `${process.env.FILE_PATH}`,
+            ].join('\n');
+            const labels = ['🤖 Content Audit'];
+
+            if(!outdated) {
+              core.info(`Content for ${process.env.FILE_PATH} is up to date. No issue created.`);
+              return;
+            }
+            const res = await github.rest.issues.create({
+              owner, repo, title, body, labels,
+            });
+            core.info(`Created issue \#${res.data.number}`);
+  update-checked:
+    runs-on: ubuntu-latest
+    needs: [query-tina-content, generate-feedback]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with: 
+          version: 10
+      - name: Install deps
+        run: pnpm --dir=.github/scripts/tina-helpers install
+      - name: Run update-checked
+        run: |
+          pnpm --dir=.github/scripts/tina-helpers run update-checked '${{ needs.query-tina-content.outputs.paths }}'
+      - name: Format links for PR
+        id: fmt
+        run: |
+          echo '${{ needs.query-tina-content.outputs.paths }}' | jq -r '.[]' > links.txt
+          echo "list<<EOF" >> "$GITHUB_OUTPUT"
+          sed 's/^/- /' links.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          rm -rf links.txt
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "/actions/runs/${{ github.run_id }}: update lastChecked for selected files"
+          branch: content-audit/flow/${{ github.run_id }}
+          title: "🤖 Content Audit | update lastChecked #${{ github.run_number }}"
+          
+          body: |
+            ### Description
+            
+            This PR updates the `lastChecked` timestamp for the following files based on the recent content audit:
+
+            ### File
+
+            ${{ steps.fmt.outputs.list }}
+            
+            ### Workflow run
+
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+          labels: '🤖 Content Audit'
