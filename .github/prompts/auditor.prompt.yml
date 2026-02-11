@@ -18,12 +18,13 @@ jsonSchema: |-
         },
         "suggestions": {
           "type": "string",
-          "description": "A brief paragraph describing how you would actionably improve the content based on the system prompt criteria."
+          "description": "A detailed paragraph with specific suggestions describing how you would actionably improve the content based on the system prompt criteria. Include specific reference to any APIs that have been updated or progress updates."
         }
       },
       "additionalProperties": false,
       "required": [
         "outdated",
+        "overview",
         "suggestions"
       ]
     }
