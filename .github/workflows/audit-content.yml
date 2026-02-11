@@ -19,7 +19,7 @@ jobs:
       - name: Setup PNPM
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: "pnpm@10.15.0"
       # TODO: Add handling if tina path returns nothing
       # TODO: Add error handling for if files cannot be linked to paths
       - name: "Aggregate Content Paths from TinaCMS"
