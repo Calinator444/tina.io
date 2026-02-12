@@ -53,7 +53,7 @@ jobs:
         uses: actions/ai-inference@v2
         with:
           max-tokens: null
-          model: open-ai/o1-mini
+          model: gpt-4o-mini
           prompt-file: .github/prompts/auditor.prompt.yml
           input: |
             systemprompt: ${{ vars.TINA_AUDITOR_SYSTEM_PROMPT || 'You are an expert content auditor. Your task is to review the provided markdown content and provide constructive feedback on its quality, clarity, relevance and engagement. You should highlight and suggest specific areas for improvement. Ignore the lastChecked date.' }}
