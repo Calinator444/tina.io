@@ -1,6 +1,6 @@
 responseFormat: json_schema
 maxTokens: 1000
-model: open-ai/gpt-5-mini
+model: open-ai/o1-mini
 jsonSchema: |-
   {
     "name": "content_audit_feedback",
